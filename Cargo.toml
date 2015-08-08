@@ -1,0 +1,21 @@
+[package]
+name    = "male"
+version = "0.1.0"
+
+authors = ["meh. <meh@schizofreni.co>"]
+license = "WTFPL"
+
+description = "Music AnaLyzEr."
+repository  = "male"
+keywords    = ["audio", "music", "analyzer"]
+
+[features]
+f32 = ["rft/f32"]
+f64 = ["rft/f64"]
+
+[dependencies]
+strided = "*"
+num     = "*"
+
+[dependencies.rft]
+git = "https://github.com/meh/rft"
