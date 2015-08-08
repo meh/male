@@ -1,5 +1,9 @@
 pub use rft::window::Rectangular;
 pub use rft::window::Triangular;
 pub use rft::window::Bartlett;
+pub use rft::window::Parzen;
 pub use rft::window::Hamming;
 pub use rft::window::Hann;
+pub use rft::window::Welch;
+pub use rft::window::Blackman;
+pub use rft::window::Nuttall;
