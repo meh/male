@@ -14,5 +14,5 @@ pub use self::band::Band;
 pub mod window;
 pub use self::window::Window;
 
-mod beat;
-pub use self::beat::Beat;
+pub mod onset;
+pub use self::onset::Onset;
