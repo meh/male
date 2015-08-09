@@ -19,6 +19,7 @@ pub struct State<T: Default + Clone> {
 	spectral:  SpectralFlux,
 	threshold: Threshold,
 	fluxes:    Ring<Precision>,
+	previous:  (Precision, Precision),
 }
 
 pub type Result<T> = ::std::result::Result<Peak<T>, Peak<T>>;
@@ -53,6 +54,8 @@ impl<T: Default + Clone> Onset<T> {
 				Ring::new(25 + 1)
 			},
 
+			previous: (0.0, 0.0),
+
 			band: band,
 		});
 
@@ -70,6 +73,8 @@ impl<T: Default + Clone> Onset<T> {
 			threshold: Threshold::default(),
 
 			fluxes: Ring::new(25 + 1),
+
+			previous: (0.0, 0.0),
 		});
 	}
 
@@ -81,7 +86,7 @@ impl<T: Default + Clone> Onset<T> {
 		let mut result = Vec::new();
 		let spectrum   = rft::spectrum::compute(&**channel);
 
-		for &mut State { ref band, ref mut spectral, ref mut threshold, ref mut fluxes } in self.state.iter_mut() {
+		for &mut State { ref band, ref mut spectral, ref mut threshold, ref mut fluxes, ref mut previous } in self.state.iter_mut() {
 			// Get the start as index for the spectrum.
 			let start = rft::spectrum::index_for(band.low(), self.size, self.rate);
 
@@ -102,17 +107,36 @@ impl<T: Default + Clone> Onset<T> {
 				continue;
 			}
 
-			let current             = *fluxes.front().unwrap();
+			// Get the current flux, `fluxes` contains `threshold.size + 1`, so the
+			// front of `fluxes` corresponds to the center flux in the `threshold`.
+			let current  = *fluxes.front().unwrap();
+
+			// Get the current threshold and its offset in sample size.
 			let (offset, threshold) = threshold.current();
-			let seconds             = (1.0 / self.rate as f64) * (offset as f64 * self.size as f64);
-			let peak                = Peak::new(band.clone(), seconds, threshold, current);
+
+			// Get the offset in seconds of the previous peak.
+			let seconds = (1.0 / self.rate as f64) * ((offset - 1) as f64 * self.size as f64);
 
 			// We have an outlier!
 			if current > threshold {
-				result.push(Ok(peak));
+				let peak = Peak::new(band.clone(), seconds, threshold, previous.0);
+
+				// Check if the peak is still going or we reached it.
+				if previous.1 > current {
+					result.push(Ok(peak));
+				}
+				else {
+					result.push(Err(peak));
+				}
+
+				previous.0 = current;
+				previous.1 = current;
 			}
 			else {
-				result.push(Err(peak));
+				result.push(Err(Peak::new(band.clone(), seconds, threshold, previous.0)));
+
+				previous.0 = current;
+				previous.1 = 0.0;
 			}
 		}
 
