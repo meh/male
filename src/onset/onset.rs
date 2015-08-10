@@ -87,14 +87,8 @@ impl<T: Default + Clone> Onset<T> {
 		let spectrum   = rft::spectrum::compute(&**channel);
 
 		for &mut State { ref band, ref mut spectral, ref mut threshold, ref mut fluxes, ref mut previous } in self.state.iter_mut() {
-			// Get the start as index for the spectrum.
-			let start = rft::spectrum::index_for(band.low(), self.size, self.rate);
-
-			// Get the end as index for the spectrum.
-			let end = rft::spectrum::index_for(band.high(), self.size, self.rate);
-
 			// Compute the flux for the specified part of the spectrum.
-			let flux = spectral.compute(&spectrum[start .. end]);
+			let flux = spectral.compute(band.as_slice(&spectrum, self.rate));
 
 			// Cache the flux.
 			fluxes.push(flux);

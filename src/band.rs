@@ -1,4 +1,7 @@
 use std::ops::{Deref, DerefMut};
+use rft;
+
+use {Precision};
 
 #[derive(Clone, Debug)]
 pub struct Band<T: Clone + Default = ()> {
@@ -37,6 +40,14 @@ impl<T: Clone + Default> Band<T> {
 	#[inline(always)]
 	pub fn high(&self) -> u32 {
 		self.high
+	}
+
+	pub fn as_slice<'a, S: AsRef<[Precision]>>(&self, spectrum: &'a S, rate: u32) -> &'a [Precision] {
+		let slice = spectrum.as_ref();
+		let start = rft::spectrum::index_for(self.low, slice.len(), rate);
+		let end   = rft::spectrum::index_for(self.high, slice.len(), rate);
+
+		&slice[start .. end]
 	}
 }
 
